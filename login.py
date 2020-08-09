@@ -5,6 +5,10 @@ db = mc.connect(host='localhost', user='root', passwd='anas', database='login_sy
 dbCursor = db.cursor()
 dbExec = dbCursor.execute
 
+def checkQ(inputValue):
+	if inputValue.lower() == 'q':
+		quit()
+
 def insertIntoUd(fname, lname, username, email_id, password): 
 	# This function is to insert fname, lname, username, email_id and password to the table user_details in the database login_system. Ud stands for User Details
 	dbExec(f"insert into user_details (fname, lname, username, email_id, password) values('{fname}', '{lname}', '{username}', '{email_id}', '{password}')")
@@ -61,6 +65,7 @@ def getItem(itemName, checkItemFunc, task):
 	if task.lower() == 'signup':
 		while True:
 			item = input(f"{itemName}: ")
+			checkQ(item)
 			if not checkItemFunc(item):
 				return item
 				break
@@ -75,6 +80,7 @@ def getItem(itemName, checkItemFunc, task):
 	elif task.lower() == 'login':
 		while True:
 			item = input(f"{itemName}: ")
+			checkQ(item)
 			if checkItemFunc(item):
 				return item
 				break
@@ -87,6 +93,7 @@ def getItem(itemName, checkItemFunc, task):
 
 def ifYes(task):
 	choice = input(f"Would you like to {task}?\n(y/n):")
+	checkQ(choice)
 	if choice in ['y']:
 		return True
 	else:
@@ -106,7 +113,9 @@ def login():
 
 def signup():
 	fname = input("First Name: ")
+	checkQ(fname)
 	lname = input("Last Name: ")
+	checkQ(lname)
 
 	username = getUsername('signup')
 	email_id = getEmailId('signup')
@@ -114,9 +123,11 @@ def signup():
 	password = getPassword()
 
 	insertIntoUd(fname, lname, username, email_id, password)
+	return True
 
 def main():
 	choice = input("Login(l)\nSignUp(s)\n:") 
+	checkQ(choice)
 	if choice.lower() in ['l']:
 		if login():
 			print("Logged In!")
