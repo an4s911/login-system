@@ -3,11 +3,11 @@ import hashlib, binascii, getpass
 
 db = mc.connect(host='localhost', user='root', passwd='anas', database='login_system')
 dbCursor = db.cursor()
-
+dbExec = dbCursor.execute
 
 def insertIntoUd(fname, lname, username, email_id, password): 
 	# This function is to insert fname, lname, username, email_id and password to the table user_details in the database login_system. Ud stands for User Details
-	dbCursor.execute(f"insert into user_details (fname, lname, username, email_id, password) values('{fname}', '{lname}', '{username}', '{email_id}', '{password}')")
+	dbExec(f"insert into user_details (fname, lname, username, email_id, password) values('{fname}', '{lname}', '{username}', '{email_id}', '{password}')")
 	db.commit()
 
 def update(item, itemType): 
@@ -26,11 +26,11 @@ def checkUsername(username):
 	return checkItemInTable(username, 'username')
 
 def checkPassword(password):
-	return checkItemInTable(password, 'password')
+	pass
 
 def checkItemInTable(item, itemType): 
 	# item is the data for the itemType for eg; if itemType is email_id then item will be the email_id like this item=='example@example.com' and itemType=='email_id'
-	dbCursor.execute(f'select {itemType} from user_details')
+	dbExec(f'select {itemType} from user_details')
 	items = [i[0] for i in dbCursor.fetchall()]
 	if item in items:
 		return True
@@ -38,7 +38,13 @@ def checkItemInTable(item, itemType):
 		return False
 
 def checkUser(username, email_id, password):
-	pass
+	dbExec(f"select password from user_details where username='{username}' and email_id='{email_id}'")
+
+	fetchedPassword = dbCursor.fetchone()[0]
+	if fetchedPassword == password:
+		return True
+	else: 
+		return False
 
 def getUsername(task):
 	return getItem('Username', checkUsername, task)
@@ -52,7 +58,7 @@ def getPassword():
 
 def getItem(itemName, checkItemFunc, task): 
 	# mainly for username and email_id, itemName refers to what item we are getting for eg; username or email_id. checkItemFunc refers to the function used to check whether the particular item value is already used
-	if task.lower() == 'login':
+	if task.lower() == 'signup':
 		while True:
 			item = input(f"{itemName}: ")
 			if not checkItemFunc(item):
@@ -66,7 +72,7 @@ def getItem(itemName, checkItemFunc, task):
 				else:
 					continue
 
-	elif task.lower() == 'signup':
+	elif task.lower() == 'login':
 		while True:
 			item = input(f"{itemName}: ")
 			if checkItemFunc(item):
@@ -89,7 +95,14 @@ def ifYes(task):
 def login():
 	username = getUsername('login')
 	email_id = getEmailId('login')
-	password = getPassword()
+	while True:
+		password = getPassword()
+		if checkUser(username, email_id, password):
+			return True
+			break
+		else:
+			print("Incorrect Password! Try again:-")
+			continue
 
 def signup():
 	fname = input("First Name: ")
@@ -105,9 +118,13 @@ def signup():
 def main():
 	choice = input("Login(l)\nSignUp(s)\n:") 
 	if choice.lower() in ['l']:
-		login()
+		if login():
+			print("Logged In!")
+			main()
 	elif choice.lower() in ['s']:
-		signup()
+		if signup():
+			print("Account created!")
+			main()
 	else:
 		print("Please Input valid option!")
 		main()
