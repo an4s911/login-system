@@ -1,11 +1,13 @@
 import mysql.connector as mc
 import hashlib, binascii, getpass
 
-db = mc.connect(host='localhost', user='root', passwd='anas', database='login_system')
-dbCursor = db.cursor()
-dbExec = dbCursor.execute
+db = mc.connect(host='localhost', user='root', passwd='anas', database='login_system') # connecting to the database in mysql
+dbCursor = db.cursor() # cursor for database
+dbExec = dbCursor.execute # just a smaller execute statement so its not too long because 'dbCursor.execute' is soo boring to type over and over
 
-def checkQ(inputValue):
+loggedIn = False # To show that the user is not logged in and this changes to True when the user logs in
+
+def checkQ(inputValue): # when the user enters the letter 'q' anywhere the user is asked to input, the programs exits(or breaks, quits)
 	if inputValue.lower() == 'q':
 		quit()
 
@@ -23,17 +25,16 @@ def hashIt(password):
 	dk = hashlib.pbkdf2_hmac('sha256', password, b's', 100000)
 	return binascii.hexlify(dk).decode('utf-8')
 
-def checkEmailId(email_id):
+def checkEmailId(email_id): # checks if the email id is there in the table user_details in the database and returns a boolean
 	return checkItemInTable(email_id, 'email_id')
 
-def checkUsername(username):
+def checkUsername(username): # same as checkEmailId but this checks for the username
 	return checkItemInTable(username, 'username')
 
 def checkPassword(password):
 	pass
 
-def checkItemInTable(item, itemType): 
-	# item is the data for the itemType for eg; if itemType is email_id then item will be the email_id like this item=='example@example.com' and itemType=='email_id'
+def checkItemInTable(item, itemType): # checks for item in the table user_details in the database. item is the data for the itemType for eg; if itemType is email_id then item will be the email id like this item=='example@example.com' and itemType=='email_id'
 	dbExec(f'select {itemType} from user_details')
 	items = [i[0] for i in dbCursor.fetchall()]
 	if item in items:
@@ -41,7 +42,7 @@ def checkItemInTable(item, itemType):
 	else:
 		return False
 
-def checkUser(username, email_id, password):
+def checkUser(username, email_id, password): # checks if the password for the username and email_id is correct and returns boolean
 	dbExec(f"select password from user_details where username='{username}' and email_id='{email_id}'")
 
 	fetchedPassword = dbCursor.fetchone()[0]
@@ -50,18 +51,17 @@ def checkUser(username, email_id, password):
 	else: 
 		return False
 
-def getUsername(task):
+def getUsername(task): # takes user input for username
 	return getItem('Username', checkUsername, task)
 
-def getEmailId(task):
+def getEmailId(task): # takes user input for email id
 	return getItem('Email ID', checkEmailId, task)
 
-def getPassword():
+def getPassword(): # takes user input for password
 	password = getpass.getpass()
 	return hashIt(password)
 
-def getItem(itemName, checkItemFunc, task): 
-	# mainly for username and email_id, itemName refers to what item we are getting for eg; username or email_id. checkItemFunc refers to the function used to check whether the particular item value is already used
+def getItem(itemName, checkItemFunc, task): # mainly for username and email_id, itemName refers to what item we are getting for eg; username or email_id. checkItemFunc refers to the function used to check whether the particular item value is already used. task is either login task or signup task, this is to make different functions for both seperately.
 	if task.lower() == 'signup':
 		while True:
 			item = input(f"{itemName}: ")
@@ -91,7 +91,7 @@ def getItem(itemName, checkItemFunc, task):
 				else:
 					continue
 
-def ifYes(task):
+def ifYes(task): # here also mostly the task if either login or signup but can be used for other things too. This function is to ask the user if the user would like to change their task to something recommended
 	choice = input(f"Would you like to {task}?\n(y/n):")
 	checkQ(choice)
 	if choice in ['y']:
@@ -99,19 +99,21 @@ def ifYes(task):
 	else:
 		return False
 
-def login():
+def login(): # The login function  returns 
 	username = getUsername('login')
 	email_id = getEmailId('login')
 	while True:
 		password = getPassword()
 		if checkUser(username, email_id, password):
-			return True
+			print("Logged In!")
+			loggedIn = True
+			main()
 			break
 		else:
 			print("Incorrect Password! Try again:-")
 			continue
 
-def signup():
+def signup(): # The signup function. returns True after signing up and recording all user data
 	fname = input("First Name: ")
 	checkQ(fname)
 	lname = input("Last Name: ")
@@ -123,22 +125,28 @@ def signup():
 	password = getPassword()
 
 	insertIntoUd(fname, lname, username, email_id, password)
-	return True
-
-def main():
-	print("Choose from the following by entering the character in the corresponding brackets. Type 'q' anywhere in the program to exit.")
-	choice = input("Login(l)\nSignUp(s)\n:") 
-	checkQ(choice)
-	if choice.lower() in ['l']:
-		if login():
-			print("Logged In!")
-			main()
-	elif choice.lower() in ['s']:
-		if signup():
-			print("Account created!")
-			main()
+	print("Account created!")
+	if ifYes('login'):
+		login()
 	else:
-		print("Please Input valid option!")
 		main()
 
+def main(): # The Main function. This is the function that is executed first when running this program.
+	if loggedIn == True:
+		pass
+		
+	else:
+		choice = input("Login(l)\nSignUp(s)\n:") 
+		checkQ(choice)
+		if choice.lower() in ['l']:
+			login()
+		
+		elif choice.lower() in ['s']:
+			signup()		
+				
+		else:
+			print("Please Input valid option!")
+			main()
+
+print("Choose from the following by entering the character in the corresponding brackets. Type 'q' anywhere in the program to exit.")
 main()
