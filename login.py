@@ -126,6 +126,7 @@ def signup():
 	return True
 
 def main():
+	print("Choose from the following by entering the character in the corresponding brackets. Type 'q' anywhere in the program to exit.")
 	choice = input("Login(l)\nSignUp(s)\n:") 
 	checkQ(choice)
 	if choice.lower() in ['l']:
