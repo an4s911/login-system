@@ -14,8 +14,6 @@ passwd='root'
 And you are ready to go.
 Now just Run the program
 
-If you find any trouble, problems or bugs Please file an issue
+If you find any trouble, problems or bugs Please create an issue.
 
 Thank You
-
-~ Anas
