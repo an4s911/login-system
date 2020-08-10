@@ -7,13 +7,14 @@ tableName = 'user_details'
 db = mc.connect(host='localhost', user='root', passwd='anas') # connecting to the mysql server [, database='login_system']
 dbCursor = db.cursor() # cursor for database
 dbExec = dbCursor.execute # just a smaller execute statement so its not too long because 'dbCursor.execute' is soo boring to type over and over
+dbFetchall = dbCursor.fetchall
+dbFetchone = dbCursor.fetchone
 
 dbExec(f'create database if not exists {databaseName}')
 dbExec(f'use {databaseName}')
 dbExec(f'create table if not exists {tableName}(id int not null auto_increment primary key, fname char(30), lname char(30), username varchar(50) not null unique, email_id varchar(50) not null unique, password varchar(128) not null)')
 
-loggedIn = False # To show that the user is not logged in and this changes to True when the user logs in
-
+userDetails = {'loggedIn':False}
 def checkQ(inputValue): # when the user enters the letter 'q' anywhere the user is asked to input, the programs exits(or breaks, quits). inputValue is whatever the user inputs or enters
 	if inputValue.lower() == 'q':
 		print("Do you really want to quit?")
@@ -73,6 +74,7 @@ def getEmailId(task): # takes user input for email id
 
 def getPassword(): # takes user input for password
 	password = getpass.getpass()
+	checkQ(password)
 	return hashIt(password)
 
 def getItem(itemName, checkItemFunc, task): # mainly for username and email_id, itemName refers to what item we are getting for eg; username or email_id. checkItemFunc refers to the function used to check whether the particular item value is already used. task is either login task or signup task, this is to make different functions for both seperately.
@@ -115,18 +117,21 @@ def ifYes(task): # here also mostly the task if either login or signup but can b
 		return False
 
 def login(): # The login function  returns 
+	global userDetails
 	username = getUsername('login')
 	email_id = getEmailId('login')
 	while True:
 		password = getPassword()
 		if checkUser(username, email_id, password):
 			print("Logged In!")
-			loggedIn = True
+			userDetails['loggedIn'] = True
+			userDetails['username'] = username
 			main()
 			break
 		else:
 			print("Incorrect Password! Try again:-")
 			continue
+
 
 def signup(): # The signup function. returns True after signing up and recording all user data
 	fname = input("First Name: ")
@@ -147,9 +152,13 @@ def signup(): # The signup function. returns True after signing up and recording
 		main()
 
 def main(): # The Main function. This is the function that is executed first when running this program.
-	if loggedIn == True:
-		pass
-		
+	if userDetails['loggedIn'] == True:
+		dbExec(f"select fname, lname, username, email_id from {tableName} where username='{userDetails['username']}'")
+		fname, lname, username, email_id = dbFetchone()
+		name = fname + '' + lname
+		print("Name\tUsername\tEmail ID")
+		print(f"{name}\t{username}\t{email_id}")
+
 	else:
 		choice = input("Login(l)\nSignUp(s)\n:") 
 		checkQ(choice)
