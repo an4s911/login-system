@@ -1,19 +1,28 @@
 import mysql.connector as mc
 import hashlib, binascii, getpass
 
-db = mc.connect(host='localhost', user='root', passwd='anas', database='login_system') # connecting to the database in mysql
+databaseName = 'login_system'
+tableName = 'user_details'
+
+db = mc.connect(host='localhost', user='root', passwd='anas') # connecting to the mysql server [, database='login_system']
 dbCursor = db.cursor() # cursor for database
 dbExec = dbCursor.execute # just a smaller execute statement so its not too long because 'dbCursor.execute' is soo boring to type over and over
 
+dbExec(f'create database if not exists {databaseName}')
+dbExec(f'use {databaseName}')
+dbExec(f'create table if not exists {tableName}(id int not null auto_increment primary key, fname char(30), lname char(30), username varchar(50) not null unique, email_id varchar(50) not null unique, password varchar(128) not null)')
+
 loggedIn = False # To show that the user is not logged in and this changes to True when the user logs in
 
-def checkQ(inputValue): # when the user enters the letter 'q' anywhere the user is asked to input, the programs exits(or breaks, quits)
+def checkQ(inputValue): # when the user enters the letter 'q' anywhere the user is asked to input, the programs exits(or breaks, quits). inputValue is whatever the user inputs or enters
 	if inputValue.lower() == 'q':
-		quit()
+		print("Do you really want to quit?")
+		choice = input("If you want to start over type 's' else press Enter\n:")
+		main() if choice.lower() in ['s'] else quit()
 
 def insertIntoUd(fname, lname, username, email_id, password): 
 	# This function is to insert fname, lname, username, email_id and password to the table user_details in the database login_system. Ud stands for User Details
-	dbExec(f"insert into user_details (fname, lname, username, email_id, password) values('{fname}', '{lname}', '{username}', '{email_id}', '{password}')")
+	dbExec(f"insert into {tableName} (fname, lname, username, email_id, password) values('{fname}', '{lname}', '{username}', '{email_id}', '{password}')")
 	db.commit()
 
 def update(item, itemType): 
@@ -22,7 +31,7 @@ def update(item, itemType):
 
 def hashIt(password):
 	password = password.encode('utf-8')
-	dk = hashlib.pbkdf2_hmac('sha256', password, b's', 100000)
+	dk = hashlib.pbkdf2_hmac('sha256', password, b'anas', 100000)
 	return binascii.hexlify(dk).decode('utf-8')
 
 def checkEmailId(email_id): # checks if the email id is there in the table user_details in the database and returns a boolean
@@ -35,7 +44,7 @@ def checkPassword(password):
 	pass
 
 def checkItemInTable(item, itemType): # checks for item in the table user_details in the database. item is the data for the itemType for eg; if itemType is email_id then item will be the email id like this item=='example@example.com' and itemType=='email_id'
-	dbExec(f'select {itemType} from user_details')
+	dbExec(f'select {itemType} from {tableName}')
 	items = [i[0] for i in dbCursor.fetchall()]
 	if item in items:
 		return True
@@ -43,13 +52,18 @@ def checkItemInTable(item, itemType): # checks for item in the table user_detail
 		return False
 
 def checkUser(username, email_id, password): # checks if the password for the username and email_id is correct and returns boolean
-	dbExec(f"select password from user_details where username='{username}' and email_id='{email_id}'")
+	dbExec(f"select password from {tableName} where username='{username}' and email_id='{email_id}'")
 
-	fetchedPassword = dbCursor.fetchone()[0]
-	if fetchedPassword == password:
-		return True
-	else: 
-		return False
+	try:
+		fetchedPassword = dbCursor.fetchone()[0]
+	except TypeError:
+		print("Username and Email ID does not match!")
+		login()
+	else:
+		if fetchedPassword == password:
+			return True
+		else: 
+			return False
 
 def getUsername(task): # takes user input for username
 	return getItem('Username', checkUsername, task)
@@ -85,6 +99,7 @@ def getItem(itemName, checkItemFunc, task): # mainly for username and email_id, 
 				return item
 				break
 			else:
+				print(f"{itemName} not found!")
 				if ifYes('SignUp'):
 					signup()
 					break
