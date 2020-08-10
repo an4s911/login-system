@@ -6,7 +6,7 @@ To run this program you need:
 • MySQL
 • MySQL Connector/Python
 
-First setup by opening the file 'logon.py' and giving the right user and passwd for the MySQL database. By default both are set to 'root'
+First setup by opening the file 'login.py' and change user and passwd for the MySQL/Python connection. By default both are set to 'root'
 
 user='root'
 passwd='root'
