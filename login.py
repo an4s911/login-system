@@ -160,6 +160,7 @@ def main(): # The Main function. This is the function that is executed first whe
 		print(f"{name}\t{username}\t{email_id}")
 
 	else:
+		print("Choose from the following by entering the character in the corresponding brackets. Type 'q' anywhere in the program to exit.")
 		choice = input("Login(l)\nSignUp(s)\n:") 
 		checkQ(choice)
 		if choice.lower() in ['l']:
@@ -173,5 +174,4 @@ def main(): # The Main function. This is the function that is executed first whe
 			main()
 
 if __name__=='__main__':
-	print("Choose from the following by entering the character in the corresponding brackets. Type 'q' anywhere in the program to exit.")
 	main()
