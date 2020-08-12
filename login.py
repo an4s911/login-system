@@ -1,5 +1,6 @@
 import mysql.connector as mc
 import hashlib, binascii, getpass
+import re, datetime
 
 databaseName = 'login_system'
 tableName = 'user_details'
@@ -15,6 +16,13 @@ dbExec(f'use {databaseName}')
 dbExec(f'create table if not exists {tableName}(id int not null auto_increment primary key, fname char(30), lname char(30), username varchar(50) not null unique, email_id varchar(50) not null unique, password varchar(128) not null)')
 
 userDetails = {'loggedIn':False}
+
+try:
+	f = open('log.txt', 'r')
+except FileNotFoundError:
+	f = open('log.txt', 'a')
+	f.write("------- Logs every SignUp and Login -------")
+
 def checkQ(inputValue): # when the user enters the letter 'q' anywhere the user is asked to input, the programs exits(or breaks, quits). inputValue is whatever the user inputs or enters
 	if inputValue.lower() == 'q':
 		print("Do you really want to quit?")
@@ -116,40 +124,46 @@ def ifYes(task): # here also mostly the task if either login or signup but can b
 	else:
 		return False
 
-def login(): # The login function  returns 
-	global userDetails
-	username = getUsername('login')
-	email_id = getEmailId('login')
-	while True:
-		password = getPassword()
-		if checkUser(username, email_id, password):
-			print("Logged In!")
-			userDetails['loggedIn'] = True
-			userDetails['username'] = username
-			main()
-			break
+def log(action, username, email_id):
+	with open('log.txt', 'a') as logFile:
+		logFile.write(f"\n{datetime.datetime.today().strftime('%d %b %Y %I:%M %p GMT+3')} | action:{action} | user:{username} | email_id:{email_id}")
+
+def login(usernameEmailId, password): # The login function  returns
+	if re.match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", usernameEmailId):
+		if checkEmailId(usernameEmailId):
+			dbExec(f"select username from {tableName} where email_id='{usernameEmailId}'")
+			username = dbFetchone()[0]
+			if checkUser(username, usernameEmailId, password):
+				log('login', username, usernameEmailId)
+				return (username, True)
+			else:
+				return (username, False)
 		else:
-			print("Incorrect Password! Try again:-")
-			continue
-
-
-def signup(): # The signup function. returns True after signing up and recording all user data
-	fname = input("First Name: ")
-	checkQ(fname)
-	lname = input("Last Name: ")
-	checkQ(lname)
-
-	username = getUsername('signup')
-	email_id = getEmailId('signup')
-
-	password = getPassword()
-
-	insertIntoUd(fname, lname, username, email_id, password)
-	print("Account created!")
-	if ifYes('login'):
-		login()
+			return (usernameEmailId, False)
 	else:
-		main()
+		if checkUsername(usernameEmailId):
+			dbExec(f"select email_id from {tableName} where username='{usernameEmailId}'")
+			email_id = dbFetchone()[0]
+			if checkUser(usernameEmailId, email_id, password):
+				log('login', usernameEmailId, email_id)
+				return (usernameEmailId, True)
+			else:
+				return (usernameEmailId, False)
+		else:
+			return (usernameEmailId, False)
+
+
+def signup(fname, lname, username, email_id, password): # The signup function. returns True after signing up and recording all user data
+	if checkUsername(username):
+		return ("Username", False)
+	elif checkEmailId(email_id):
+		return ("Email ID", False)
+	else:
+		insertIntoUd(fname, lname, username, email_id, password)
+		log('signup', username, email_id)
+		with open('log.txt', 'a') as logFile:
+			logFile.write(f" | name:{fname} {lname}")
+		return (None, True)
 
 def main(): # The Main function. This is the function that is executed first when running this program.
 	if userDetails['loggedIn'] == True:
@@ -173,7 +187,16 @@ def main(): # The Main function. This is the function that is executed first whe
 			print("Please Input valid option!")
 			main()
 
+def returnUserDetails(username):
+	dbExec(f"select fname, lname, username, email_id from user_details where username='{username}'")
+	return dbFetchone()
+
+
+
 if __name__=='__main__':
-	main()
+	usernameEmailId = input("username/email: ")
+	password = input("Password: ")
+	print(login(usernameEmailId, hashIt(password)))
+# 	main()
 
 # ~sr
